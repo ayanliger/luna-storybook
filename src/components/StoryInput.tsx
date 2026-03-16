@@ -43,11 +43,17 @@ export default function StoryInput({
           <h1 className="font-serif text-7xl font-light text-ink-primary tracking-tight">
             Luna
           </h1>
+          <div className="h-4" />
           <p className="font-sans text-lg text-ink-muted leading-relaxed max-w-md mx-auto">
             An interactive visual novel storybook.
             <br />
             Give Luna a theme, and she will paint your story.
           </p>
+        </div>
+
+        {/* Divider */}
+        <div className="flex justify-center">
+          <div className="w-24 h-px bg-canvas-linen" />
         </div>
 
         {/* Input form */}
@@ -61,7 +67,7 @@ export default function StoryInput({
               disabled={isGenerating}
               className="w-full px-6 py-4 bg-canvas-warm border border-canvas-linen rounded-none
                 font-serif text-xl text-ink-primary placeholder:text-ink-muted/50
-                focus:outline-none focus:border-accent-gold transition-colors
+                focus:outline-none focus:border-ink-muted transition-colors
                 disabled:opacity-50"
             />
           </div>
@@ -71,12 +77,17 @@ export default function StoryInput({
             disabled={!theme.trim() || isGenerating}
             className="px-8 py-3 font-sans text-sm tracking-widest uppercase
               text-canvas-cream bg-ink-primary
-              hover:bg-accent-gold transition-colors duration-300
+              hover:bg-ink-secondary transition-colors duration-300
               disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Begin
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="flex justify-center">
+          <div className="w-24 h-px bg-canvas-linen" />
+        </div>
 
         {/* Suggestions */}
         <div className="space-y-3">
@@ -90,8 +101,8 @@ export default function StoryInput({
                 onClick={() => setTheme(s)}
                 disabled={isGenerating}
                 className="px-4 py-2 font-serif text-sm text-ink-secondary
-                  border border-canvas-linen hover:border-accent-gold
-                  hover:text-accent-gold transition-colors
+                  border border-canvas-linen hover:border-ink-muted
+                  hover:text-ink-primary transition-colors
                   disabled:opacity-30"
               >
                 {s}
