@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         // Step 3: Generate TTS narration
         send({
           type: "status",
-          message: "Finding the voice for your poem...",
+          message: "Finding the voice for your story...",
         });
 
         try {

@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { StoryPlan, StoryPage } from "./types";
 import {
   STORY_PLANNER_SYSTEM_PROMPT,
-  IMPRESSIONIST_POET_SYSTEM_PROMPT,
+  IMPRESSIONIST_PROSE_SYSTEM_PROMPT,
   buildPlannerPrompt,
   buildImagePrompt,
   buildTTSPrompt,
@@ -53,12 +53,12 @@ export async function generateInterleavedContent(
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     config: {
       responseModalities: ["TEXT", "IMAGE"],
-      systemInstruction: IMPRESSIONIST_POET_SYSTEM_PROMPT,
+      systemInstruction: IMPRESSIONIST_PROSE_SYSTEM_PROMPT,
     },
   });
 
   const parts = response.candidates?.[0]?.content?.parts;
-  if (!parts) throw new Error("No response from image poet");
+  if (!parts) throw new Error("No response from image/prose generator");
 
   const pages: StoryPage[] = [];
   let currentPoem = "";
@@ -69,7 +69,7 @@ export async function generateInterleavedContent(
     } else if (part.inlineData) {
       pages.push({
         pageNumber: pages.length + 1,
-        poem: currentPoem || `Stanza ${pages.length + 1}`,
+        poem: currentPoem || `Page ${pages.length + 1}`,
         image: {
           data: part.inlineData.data!,
           mimeType: part.inlineData.mimeType!,
