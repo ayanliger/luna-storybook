@@ -37,14 +37,20 @@ export async function POST(request: NextRequest) {
 
   const body: GenerateRequest = await request.json();
 
-  if (!body.theme?.trim()) {
+  // Sanitize: strip control chars, collapse whitespace
+  const theme = (body.theme ?? "")
+    .replace(/[\x00-\x1f\x7f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!theme) {
     return new Response(JSON.stringify({ error: "Theme is required" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
   }
 
-  if (body.theme.length > MAX_THEME_LENGTH) {
+  if (theme.length > MAX_THEME_LENGTH) {
     return new Response(
       JSON.stringify({ error: `Theme must be ${MAX_THEME_LENGTH} characters or fewer.` }),
       { status: 400, headers: { "Content-Type": "application/json" } }
@@ -64,7 +70,7 @@ export async function POST(request: NextRequest) {
         // Step 1: Plan the story
         send({ type: "status", message: "Luna is composing your story..." });
 
-        const plan = await planStory(body.theme, body.previousContext);
+        const plan = await planStory(theme, body.previousContext);
         send({ type: "title", content: plan.title });
         send({
           type: "status",
