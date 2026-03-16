@@ -81,13 +81,16 @@ export async function generateSinglePage(
   let prose = "";
   let imageData = "";
   let imageMime = "";
+  let imageFound = false;
 
   for (const part of parts) {
-    if (part.text) {
+    if (part.text && !imageFound) {
+      // Only collect text before the first image to avoid duplicates
       prose += (prose ? "\n" : "") + part.text.trim();
     } else if (part.inlineData) {
       imageData = part.inlineData.data!;
       imageMime = part.inlineData.mimeType!;
+      imageFound = true;
     }
   }
 

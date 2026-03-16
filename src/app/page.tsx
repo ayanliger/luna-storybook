@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import StoryInput from "@/components/StoryInput";
 import StoryBook from "@/components/StoryBook";
 import LoadingState from "@/components/LoadingState";
@@ -19,6 +19,7 @@ export default function Home() {
   // Context for continuation
   const [mood, setMood] = useState("");
   const [colorPalette, setColorPalette] = useState("");
+  const pageOffsetRef = useRef(0);
 
   const handleSSEEvent = useCallback(
     (event: SSEEvent) => {
@@ -29,9 +30,9 @@ export default function Home() {
         case "title":
           setTitle(event.content as string);
           break;
-        case "stanza":
+        case "stanza": {
+          const pageNum = (event.page as number) + pageOffsetRef.current;
           setPages((prev) => {
-            const pageNum = event.page as number;
             const existing = prev.find((p) => p.pageNumber === pageNum);
             if (existing) {
               return prev.map((p) =>
@@ -50,10 +51,12 @@ export default function Home() {
             ];
           });
           break;
+        }
         case "image":
-          setPages((prev) =>
-            prev.map((p) =>
-              p.pageNumber === (event.page as number)
+          setPages((prev) => {
+            const pageNum = (event.page as number) + pageOffsetRef.current;
+            return prev.map((p) =>
+              p.pageNumber === pageNum
                 ? {
                     ...p,
                     image: {
@@ -62,8 +65,8 @@ export default function Home() {
                     },
                   }
                 : p
-            )
-          );
+            );
+          });
           break;
         case "audio":
           setAudio({
@@ -92,6 +95,7 @@ export default function Home() {
       setHasStarted(true);
 
       if (isNewStory) {
+        pageOffsetRef.current = 0;
         setTitle("");
         setPages([]);
         setChoices([]);
@@ -99,6 +103,7 @@ export default function Home() {
         setMood("");
         setColorPalette("");
       } else {
+        pageOffsetRef.current = pages.length;
         setChoices([]);
         setAudio(undefined);
       }
