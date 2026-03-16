@@ -112,6 +112,8 @@ You can also **download individual paintings** by hovering over any image in the
 ## Project Structure
 
 ```
+docs/
+└── luna-architecture.png  # System architecture diagram
 src/
 ├── app/
 │   ├── layout.tsx          # Root layout — fonts, metadata
