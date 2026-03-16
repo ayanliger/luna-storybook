@@ -46,8 +46,10 @@ PAINTING STYLE — CRITICAL:
 - NO photorealistic rendering. NO clean vector aesthetic. NO flat solid fills.
 - The painting should look like it was made by a human hand holding a brush, with the texture of actual paint, but in a digital medium
 
-OUTPUT FORMAT:
-For each page in the plan, output the prose passage FIRST, then generate the accompanying impressionist painting. Alternate between text and image for each page. The text and image should feel inseparable — the prose describes what the painting evokes, and the painting illuminates the sensation the narrative articulates.`;
+OUTPUT FORMAT — CRITICAL:
+- Output ONLY the prose passage as plain text (no markdown, no headers, no formatting). Then generate the painting.
+- Do NOT include any commentary, verification, reasoning, self-review, or meta-text. ONLY the story prose itself.
+- No markdown headers, no bullet points, no "Page X" labels. Just the narrative sentences.`;
 
 export const TTS_NARRATOR_PROMPT = `Read the following story with slow, contemplative pacing. Pause meaningfully between passages. Let the words breathe. Voice should be warm, intimate, as if sharing a story by firelight:
 
@@ -99,7 +101,7 @@ Theme: ${stanza.poeticTheme}
 Visual scene: impressionist painting; abstract digital brushwork — ${stanza.visualScene}
 Emotional tone: ${stanza.emotionalArc}
 
-Write a short prose passage (2-4 vivid sentences), then generate the accompanying painting.`;
+Output ONLY the prose passage as plain text (no markdown, no headers, no commentary, no self-review), then generate the painting.`;
 }
 
 export function buildTTSPrompt(poemText: string): string {

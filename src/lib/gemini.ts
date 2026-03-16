@@ -11,6 +11,22 @@ import { pcmToWav } from "./pcm-to-wav";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
+/** Strip markdown formatting, headers, and model reasoning/meta-commentary from prose output. */
+function cleanProseOutput(raw: string): string {
+  const lines = raw.split("\n");
+  const cleaned = lines.filter((line) => {
+    const trimmed = line.trim();
+    // Remove markdown headers
+    if (trimmed.startsWith("#")) return false;
+    // Remove lines that are model reasoning / meta-commentary
+    if (/^(I will |I have |The image |Since (it|the|this) |The (artwork|painting|generation) |Visual continuity)/i.test(trimmed)) return false;
+    // Remove empty markdown artifacts
+    if (trimmed === "---" || trimmed === "***") return false;
+    return true;
+  });
+  return cleaned.join("\n").trim();
+}
+
 const MODELS = {
   planner: "gemini-3.1-pro-preview",
   imagePoet: "gemini-3.1-flash-image-preview",
@@ -74,6 +90,9 @@ export async function generateSinglePage(
       imageMime = part.inlineData.mimeType!;
     }
   }
+
+  // Strip model reasoning, markdown headers, and meta-commentary
+  prose = cleanProseOutput(prose);
 
   return {
     pageNumber: pageIndex + 1,
