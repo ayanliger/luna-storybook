@@ -1,65 +1,222 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useCallback } from "react";
+import StoryInput from "@/components/StoryInput";
+import StoryBook from "@/components/StoryBook";
+import LoadingState from "@/components/LoadingState";
+import { StoryPage, SSEEvent } from "@/lib/types";
 
 export default function Home() {
+  const [title, setTitle] = useState("");
+  const [pages, setPages] = useState<StoryPage[]>([]);
+  const [choices, setChoices] = useState<{ label: string; theme: string }[]>([]);
+  const [audio, setAudio] = useState<{ data: string; mimeType: string } | undefined>();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [error, setError] = useState("");
+  const [hasStarted, setHasStarted] = useState(false);
+
+  // Context for continuation
+  const [mood, setMood] = useState("");
+  const [colorPalette, setColorPalette] = useState("");
+
+  const handleSSEEvent = useCallback(
+    (event: SSEEvent) => {
+      switch (event.type) {
+        case "status":
+          setStatusMessage(event.message as string);
+          break;
+        case "title":
+          setTitle(event.content as string);
+          break;
+        case "stanza":
+          setPages((prev) => {
+            const pageNum = event.page as number;
+            const existing = prev.find((p) => p.pageNumber === pageNum);
+            if (existing) {
+              return prev.map((p) =>
+                p.pageNumber === pageNum
+                  ? { ...p, poem: event.poem as string }
+                  : p
+              );
+            }
+            return [
+              ...prev,
+              {
+                pageNumber: pageNum,
+                poem: event.poem as string,
+                image: { data: "", mimeType: "" },
+              },
+            ];
+          });
+          break;
+        case "image":
+          setPages((prev) =>
+            prev.map((p) =>
+              p.pageNumber === (event.page as number)
+                ? {
+                    ...p,
+                    image: {
+                      data: event.data as string,
+                      mimeType: event.mimeType as string,
+                    },
+                  }
+                : p
+            )
+          );
+          break;
+        case "audio":
+          setAudio({
+            data: event.data as string,
+            mimeType: event.mimeType as string,
+          });
+          break;
+        case "choices":
+          setChoices(
+            (event.options as { label: string; theme: string }[]) || []
+          );
+          break;
+        case "error":
+          setError(event.message as string);
+          break;
+      }
+    },
+    []
+  );
+
+  const generate = useCallback(
+    async (theme: string, isNewStory: boolean) => {
+      setIsGenerating(true);
+      setError("");
+      setStatusMessage("Luna is composing your story...");
+      setHasStarted(true);
+
+      if (isNewStory) {
+        setTitle("");
+        setPages([]);
+        setChoices([]);
+        setAudio(undefined);
+        setMood("");
+        setColorPalette("");
+      } else {
+        setChoices([]);
+        setAudio(undefined);
+      }
+
+      try {
+        const previousContext = isNewStory
+          ? null
+          : {
+              title,
+              mood,
+              colorPalette,
+              previousStanzas: pages.map((p) => p.poem),
+            };
+
+        const response = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ theme, previousContext }),
+        });
+
+        if (!response.ok) throw new Error("Failed to start generation");
+        if (!response.body) throw new Error("No response stream");
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            try {
+              const event: SSEEvent = JSON.parse(line.slice(6));
+              handleSSEEvent(event);
+            } catch {
+              // Skip malformed events
+            }
+          }
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Something went wrong."
+        );
+      } finally {
+        setIsGenerating(false);
+        setStatusMessage("");
+      }
+    },
+    [title, mood, colorPalette, pages, handleSSEEvent]
+  );
+
+  const handleNewStory = (theme: string) => generate(theme, true);
+  const handleContinue = (theme: string) => generate(theme, false);
+
+  if (!hasStarted) {
+    return <StoryInput onSubmit={handleNewStory} isGenerating={isGenerating} />;
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="min-h-screen bg-canvas-cream">
+      {error && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-red-50 border-b border-red-200 px-6 py-3 text-center">
+          <p className="font-sans text-sm text-red-700">{error}</p>
+          <button
+            onClick={() => setError("")}
+            className="ml-4 text-red-500 hover:text-red-700 text-xs uppercase tracking-widest"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {isGenerating && pages.length === 0 && (
+        <LoadingState message={statusMessage} />
+      )}
+
+      {pages.length > 0 && (
+        <StoryBook
+          title={title}
+          pages={pages.filter((p) => p.image.data)}
+          choices={choices}
+          audio={audio}
+          onChoice={handleContinue}
+          isGenerating={isGenerating}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+      )}
+
+      {isGenerating && pages.length > 0 && (
+        <div className="text-center py-8">
+          <p className="font-serif text-lg text-ink-muted italic animate-gentle-pulse">
+            {statusMessage}
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      )}
+
+      {!isGenerating && pages.length > 0 && (
+        <div className="text-center py-12 border-t border-canvas-linen">
+          <button
+            onClick={() => {
+              setHasStarted(false);
+              setPages([]);
+              setTitle("");
+              setChoices([]);
+              setAudio(undefined);
+            }}
+            className="font-sans text-xs text-ink-muted uppercase tracking-widest
+              hover:text-accent-gold transition-colors"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Start a new story
+          </button>
         </div>
-      </main>
-    </div>
+      )}
+    </main>
   );
 }
