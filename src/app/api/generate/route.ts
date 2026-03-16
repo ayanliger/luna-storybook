@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { GenerateRequest } from "@/lib/types";
 import {
   planStory,
-  generateInterleavedContent,
+  generateSinglePage,
   generateNarration,
 } from "@/lib/gemini";
 
@@ -38,10 +38,13 @@ export async function POST(request: NextRequest) {
           message: "The painter dips her brush...",
         });
 
-        // Step 2: Generate interleaved poetry + paintings
-        const pages = await generateInterleavedContent(plan);
+        // Step 2: Generate pages one at a time
+        const pages = [];
+        for (let i = 0; i < plan.stanzas.length; i++) {
+          const previousPassages = pages.map((p) => p.poem);
+          const page = await generateSinglePage(plan, i, previousPassages);
+          pages.push(page);
 
-        for (const page of pages) {
           send({ type: "stanza", page: page.pageNumber, poem: page.poem });
           send({
             type: "image",

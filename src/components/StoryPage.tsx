@@ -17,14 +17,14 @@ export default function StoryPage({ page, isLatest, audio }: StoryPageProps) {
       className="animate-slide-up"
       style={{ animationDelay: `${(page.pageNumber - 1) * 0.15}s` }}
     >
-      <div className="max-w-4xl mx-auto px-6 py-12 md:py-20">
+      <div className="py-12 md:py-20">
         {/* Page number */}
         <p className="font-sans text-xs text-ink-muted uppercase tracking-[0.3em] mb-8 text-center">
           {page.pageNumber}
         </p>
 
-        {/* Painting — full width, large */}
-        <div className="animate-fade-in mb-10 md:mb-14">
+        {/* Painting */}
+        <div className="animate-fade-in mb-10 md:mb-14 px-6 w-3/4 mx-auto">
           <PaintingFrame
             data={page.image.data}
             mimeType={page.image.mimeType}
@@ -33,7 +33,7 @@ export default function StoryPage({ page, isLatest, audio }: StoryPageProps) {
         </div>
 
         {/* Prose + Audio */}
-        <div className="max-w-2xl mx-auto space-y-8">
+        <div className="max-w-2xl mx-auto px-6 space-y-8">
           <PoemText text={page.poem} animate={isLatest} />
           {audio && <AudioPlayer data={audio.data} mimeType={audio.mimeType} />}
         </div>

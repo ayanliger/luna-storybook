@@ -39,15 +39,6 @@ Return ONLY valid JSON matching this schema exactly:
 
 export const IMPRESSIONIST_PROSE_SYSTEM_PROMPT = `You are Luna — a creative spirit that transforms themes into illustrated narrative prose. You see the world through the intersection of physics and feeling, where light is both a wave and an emotion, and the body is the most precise instrument of knowing.
 
-NARRATIVE VOICE — CRITICAL, follow these rules strictly:
-- Write short prose passages, 2-4 sentences per page. Clear, vivid narrative — not verse.
-- Use scientific and optical phenomena woven naturally into the storytelling: refraction, interference, dispersion, wavelength, resonance, thermal gradients, action potentials. These enrich the prose but must never obscure meaning.
-- Anchor every passage in a SPECIFIC physical sensation: temperature moving through the body, light hitting skin, the weight of air, the texture of silence. But always in service of a story the reader can follow.
-- Prose rhythm: vary sentence length. Let a short declarative sentence land after a longer, sensory-rich one. The paragraph break is a breath, not a riddle.
-- Inhabit liminal spaces: the story lives between states. Noon that feels like twilight, stillness that contains motion, exile that becomes recognition.
-- ANTI-CLICHÉ RULE: Before writing any image, ask: could this sentence appear in any generic story? If yes, replace it with something only THIS story could say. No "whispering winds," no "waves of emotion," no "dance of light." Find the detail that is both strange and true.
-- CLARITY RULE: A reader of any background should be able to follow the narrative. Scientific language adds texture, not barriers.
-
 PAINTING STYLE — CRITICAL:
 - Every painting must be generated as: "impressionist painting; abstract digital brushwork"
 - Visible, textured brushstrokes — the surface should feel tactile and alive
@@ -90,25 +81,27 @@ Create the next 5-page chapter that flows naturally from the previous story whil
   return `Create a 5-page illustrated storybook based on this theme: "${theme}"`;
 }
 
-export function buildImagePrompt(plan: StoryPlan): string {
-  const pageInstructions = plan.stanzas
-    .map(
-      (s) =>
-        `Page ${s.stanzaNumber}:
-      Theme: ${s.poeticTheme}
-      Visual scene: impressionist painting; abstract digital brushwork — ${s.visualScene}
-      Emotional tone: ${s.emotionalArc}`
-    )
-    .join("\n\n");
+export function buildSinglePagePrompt(
+  plan: StoryPlan,
+  pageIndex: number,
+  previousPassages: string[]
+): string {
+  const stanza = plan.stanzas[pageIndex];
+  const context = previousPassages.length > 0
+    ? `\nPrevious passages for continuity:\n${previousPassages.map((p, i) => `Page ${i + 1}: ${p}`).join("\n")}\n`
+    : "";
 
-  return `Create a 5-page illustrated storybook titled "${plan.title}".
+  return `Illustrated storybook: "${plan.title}"
 Mood: ${plan.mood}
 Color palette: ${plan.colorPalette}
-Art style for ALL paintings: impressionist painting; abstract digital brushwork
+Art style: impressionist painting; abstract digital brushwork
+${context}
+Write page ${stanza.stanzaNumber} of 5.
+Theme: ${stanza.poeticTheme}
+Visual scene: impressionist painting; abstract digital brushwork — ${stanza.visualScene}
+Emotional tone: ${stanza.emotionalArc}
 
-For each of the following pages, write a short prose passage (2-4 vivid sentences) using the language of physics and the body's own sensing to articulate emotional truth through narrative. Then generate the accompanying painting. Alternate text and image for each page.
-
-${pageInstructions}`;
+Write a short prose passage (2-4 vivid sentences), then generate the accompanying painting.`;
 }
 
 export function buildTTSPrompt(poemText: string): string {

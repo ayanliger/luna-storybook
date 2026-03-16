@@ -4,7 +4,7 @@ import {
   STORY_PLANNER_SYSTEM_PROMPT,
   IMPRESSIONIST_PROSE_SYSTEM_PROMPT,
   buildPlannerPrompt,
-  buildImagePrompt,
+  buildSinglePagePrompt,
   buildTTSPrompt,
 } from "./prompts";
 import { pcmToWav } from "./pcm-to-wav";
@@ -43,10 +43,12 @@ export async function planStory(
   return JSON.parse(text) as StoryPlan;
 }
 
-export async function generateInterleavedContent(
-  plan: StoryPlan
-): Promise<StoryPage[]> {
-  const prompt = buildImagePrompt(plan);
+export async function generateSinglePage(
+  plan: StoryPlan,
+  pageIndex: number,
+  previousPassages: string[]
+): Promise<StoryPage> {
+  const prompt = buildSinglePagePrompt(plan, pageIndex, previousPassages);
 
   const response = await ai.models.generateContent({
     model: MODELS.imagePoet,
@@ -60,31 +62,24 @@ export async function generateInterleavedContent(
   const parts = response.candidates?.[0]?.content?.parts;
   if (!parts) throw new Error("No response from image/prose generator");
 
-  const pages: StoryPage[] = [];
-  let currentPoem = "";
+  let prose = "";
+  let imageData = "";
+  let imageMime = "";
 
   for (const part of parts) {
     if (part.text) {
-      currentPoem += (currentPoem ? "\n" : "") + part.text.trim();
+      prose += (prose ? "\n" : "") + part.text.trim();
     } else if (part.inlineData) {
-      pages.push({
-        pageNumber: pages.length + 1,
-        poem: currentPoem || `Page ${pages.length + 1}`,
-        image: {
-          data: part.inlineData.data!,
-          mimeType: part.inlineData.mimeType!,
-        },
-      });
-      currentPoem = "";
+      imageData = part.inlineData.data!;
+      imageMime = part.inlineData.mimeType!;
     }
   }
 
-  // If there's trailing text without an image, attach it to the last page
-  if (currentPoem && pages.length > 0) {
-    pages[pages.length - 1].poem += "\n\n" + currentPoem;
-  }
-
-  return pages;
+  return {
+    pageNumber: pageIndex + 1,
+    poem: prose || `Page ${pageIndex + 1}`,
+    image: { data: imageData, mimeType: imageMime },
+  };
 }
 
 export async function generateNarration(
