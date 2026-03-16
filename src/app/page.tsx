@@ -179,7 +179,14 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-canvas-cream">
+    <main className="min-h-screen bg-canvas-cream relative">
+      {/* Book-page vignette over entire page */}
+      <div
+        className="fixed inset-0 pointer-events-none z-10"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(44, 40, 37, 0.06) 100%)',
+        }}
+      />
       {error && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-red-50 border-b border-red-200 px-6 py-3 text-center">
           <p className="font-sans text-sm text-red-700">{error}</p>
