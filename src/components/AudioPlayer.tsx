@@ -71,8 +71,8 @@ export default function AudioPlayer({ data, mimeType, startPage, endPage }: Audi
       <button
         onClick={toggle}
         className="flex items-center gap-2 px-4 py-2 font-sans text-xs tracking-widest uppercase
-          text-ink-secondary border border-canvas-linen hover:border-accent-gold
-          hover:text-accent-gold transition-colors"
+          text-ink-secondary border border-canvas-linen hover:border-ink-muted
+          hover:text-ink-primary transition-colors"
         aria-label={isPlaying ? "Pause narration" : `Listen to pages ${startPage}–${endPage}`}
       >
         {isPlaying ? (
@@ -96,8 +96,8 @@ export default function AudioPlayer({ data, mimeType, startPage, endPage }: Audi
             onClick={() => seekToPage(num)}
             className={`w-7 h-7 rounded-full font-sans text-[10px] transition-colors
               ${activePage === num
-                ? "bg-accent-gold/20 text-accent-gold border border-accent-gold/40"
-                : "text-ink-muted hover:text-accent-gold hover:bg-accent-gold/10 border border-transparent"
+                ? "bg-ink-primary/10 text-ink-primary border border-ink-muted/40"
+                : "text-ink-muted hover:text-ink-primary hover:bg-ink-primary/5 border border-transparent"
               }`}
             aria-label={`Jump to page ${num}`}
           >

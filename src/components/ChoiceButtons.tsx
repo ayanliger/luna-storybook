@@ -23,9 +23,9 @@ export default function ChoiceButtons({
             onClick={() => onSelect(option.theme)}
             disabled={disabled}
             className="px-6 py-3 font-serif text-lg text-ink-primary
-              border border-ink-muted/30 hover:border-accent-gold
-              hover:text-accent-gold transition-all duration-300
-              hover:shadow-[0_2px_20px_rgba(184,150,62,0.15)]
+              border border-ink-muted/30 hover:border-ink-muted
+              hover:text-ink-primary transition-all duration-300
+              hover:shadow-[0_2px_20px_rgba(26,26,31,0.08)]
               disabled:opacity-30 disabled:cursor-not-allowed"
           >
             {option.label}

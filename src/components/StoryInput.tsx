@@ -34,7 +34,7 @@ export default function StoryInput({
       <div
         className="fixed inset-0 pointer-events-none z-10"
         style={{
-          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(44, 40, 37, 0.06) 100%)',
+          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(26, 26, 31, 0.05) 100%)',
         }}
       />
       <div className="max-w-2xl w-full text-center space-y-10 relative z-0">
@@ -100,7 +100,7 @@ export default function StoryInput({
                 key={s}
                 onClick={() => setTheme(s)}
                 disabled={isGenerating}
-                className="px-4 py-2 font-serif text-sm text-ink-secondary
+                className="px-5 py-3 font-serif text-base text-ink-secondary
                   border border-canvas-linen hover:border-ink-muted
                   hover:text-ink-primary transition-colors
                   disabled:opacity-30"

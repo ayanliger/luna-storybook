@@ -38,7 +38,7 @@ export default function StoryBook({
             {title}
           </h2>
           <div className="mt-6 flex justify-center">
-            <div className="w-24 h-px bg-accent-gold/50" />
+            <div className="w-24 h-px bg-ink-muted/30" />
           </div>
         </header>
       )}

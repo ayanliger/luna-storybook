@@ -184,7 +184,7 @@ export default function Home() {
       <div
         className="fixed inset-0 pointer-events-none z-10"
         style={{
-          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(44, 40, 37, 0.06) 100%)',
+          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(26, 26, 31, 0.05) 100%)',
         }}
       />
       {error && (
@@ -233,7 +233,7 @@ export default function Home() {
               setAudios([]);
             }}
             className="font-sans text-xs text-ink-muted uppercase tracking-widest
-              hover:text-accent-gold transition-colors"
+              hover:text-ink-primary transition-colors"
           >
             Start a new story
           </button>

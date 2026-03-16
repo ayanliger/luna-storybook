@@ -19,7 +19,7 @@ export default function PaintingFrame({
     <div className="relative">
       {/* Gallery frame effect */}
       <div
-        className="p-2 md:p-3 bg-canvas-linen shadow-[0_4px_30px_rgba(44,40,37,0.12)]"
+        className="p-2 md:p-3 bg-canvas-linen shadow-[0_4px_30px_rgba(26,26,31,0.10)]"
       >
         <div className="border border-ink-muted/10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
