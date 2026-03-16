@@ -28,17 +28,11 @@ A theme like *"a shallow pool among jagged rocks at sunset"* becomes a 5-page in
 
 ## How It Works
 
-```
-Browser (Next.js / React 19)
-    │  SSE stream (per-page)
-    ▼
-Server (Next.js API Routes)
-    │
-    ├── Gemini 3.1 Pro         → Story plan (5 scenes, palette, characters, choices)
-    ├── Gemini 3.1 Flash Image → Painting + narration per page
-    │     └── page 1 image passed as style reference → pages 2–5
-    └── Gemini 2.5 Flash TTS   → Spoken narration (Aoede voice)
-```
+<div align="center">
+
+![Luna Architecture](docs/luna-architecture.png)
+
+</div>
 
 1. You enter a theme or pick a suggestion
 2. **Gemini 3.1 Pro** produces a structured story plan — title, mood, color palette, character descriptions, 5 scene outlines, and branching choices
@@ -118,6 +112,8 @@ You can also **download individual paintings** by hovering over any image in the
 ## Project Structure
 
 ```
+docs/
+└── luna-architecture.png  # System architecture diagram
 src/
 ├── app/
 │   ├── layout.tsx          # Root layout — fonts, metadata
