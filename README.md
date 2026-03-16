@@ -1,49 +1,77 @@
-# Luna — Interactive Impressionist Poetry Storybook
+<div align="center">
 
-> An AI-powered creative storyteller that generates impressionist paintings paired with original poetry, narrated by an expressive AI voice.
+# 🌙 Luna
 
-## What it does
+**An interactive visual novel storybook powered by Gemini AI**
 
-Luna transforms a theme, mood, or scenario into a multi-page illustrated poetry collection. Each "page" features an impressionist digital painting alongside a stanza of original poetry, with optional audio narration. Users guide the story through branching choices, creating a personalized, immersive multimodal narrative.
+[![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Tailwind](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Cloud Run](https://img.shields.io/badge/Cloud_Run-4285F4?style=flat-square&logo=google-cloud&logoColor=white)](https://cloud.google.com/run)
+[![License: MIT](https://img.shields.io/badge/License-MIT-A3B18A?style=flat-square)](LICENSE)
 
-## How it works
+Give Luna a theme, and she will paint your story.
+
+[Demo](#demo) · [How It Works](#how-it-works) · [Setup](#setup) · [Export](#export-your-story)
+
+</div>
+
+---
+
+## What is Luna?
+
+Luna generates illustrated stories — each page pairs an **impressionist digital painting** with brief **visual novel narration**, read aloud by an **AI narrator**. You guide the story by choosing what happens next.
+
+A theme like *"a shallow pool among jagged rocks at sunset"* becomes a 5-page interactive storybook with paintings, prose, and voice — then branches into new chapters based on your choices.
+
+## How It Works
 
 ```
-User's Browser (Next.js React)
-       │  HTTPS (SSE stream)
-       ▼
-Google Cloud Run (Next.js App)
-       │  API calls
-       ▼
-Google AI APIs
-  ├── Gemini 3.1 Pro → Story planning & structure (JSON)
-  ├── Nano Banana 2  → Interleaved poetry + paintings
-  └── Gemini TTS     → Expressive poetry narration
+Browser (Next.js / React)
+    │  SSE stream
+    ▼
+Server (Next.js API Routes)
+    │
+    ├── Gemini 3.1 Pro         → Story plan (5 scenes, palette, choices)
+    ├── Gemini 3.1 Flash Image → Painting + narration per page
+    └── Gemini 2.5 Flash TTS   → Spoken narration (Aoede voice)
 ```
 
-1. User submits a theme (e.g., "a rainy evening in a Japanese garden")
-2. **Gemini 3.1 Pro** generates a structured story plan with 5 stanzas, visual scene descriptions, and branching choices
-3. **Nano Banana 2** produces interleaved text and images — poetry stanzas alternating with impressionist paintings — in a single API call using `responseModalities: ["TEXT", "IMAGE"]`
-4. **Gemini TTS** narrates the poetry with expressive, contemplative pacing
-5. Content streams to the browser via SSE as it becomes available
-6. User reads/listens, then selects a choice to continue the narrative
+1. You enter a theme or scenario
+2. **Gemini 3.1 Pro** produces a structured story plan — title, mood, color palette, 5 scene descriptions, and branching choices
+3. **Gemini 3.1 Flash Image** generates each page one at a time: 1–2 sentences of narration + an impressionist painting, streamed to your browser via SSE as each page completes
+4. **Gemini 2.5 Flash TTS** narrates the full section with the Aoede voice
+5. After page 5, you choose a direction to continue — the story branches into a new 5-page chapter, with full continuity of title, mood, palette, and narrative
 
-## Tech stack
+## Features
 
-- **Next.js** (TypeScript, App Router) on **Google Cloud Run**
-- **Gemini 3.1 Pro** (`gemini-3.1-pro-preview`) for story planning
-- **Nano Banana 2** (`gemini-3.1-flash-image-preview`) for interleaved text + image generation
-- **Gemini 2.5 Flash TTS** (`gemini-2.5-flash-preview-tts`) for poetry narration
-- **Google GenAI SDK** (`@google/genai`)
-- **Tailwind CSS** for styling
-- **Cormorant Garamond** + **Inter** from Google Fonts
+- **Per-page incremental rendering** — each painting and passage appears as it's generated, not all at once
+- **Branching narrative** — choose from AI-generated options or write your own direction (120-char limit, sanitized)
+- **Persistent audio** — TTS narration persists across story sections with per-page seek
+- **Story export** — save your story as a **PDF** (serif type, justified layout, centered paintings) or a **ZIP** containing styled HTML + Markdown + separate image files
+- **Per-painting download** — hover any painting for a download button
+- **Silvery, cool aesthetic** — Cormorant Garamond serif, justified text with typewriter animation, vignette overlays, and a monochrome silver palette
 
-## Setup instructions
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | **Next.js 16** (App Router, TypeScript) |
+| AI — Planning | **Gemini 3.1 Pro** (`gemini-3.1-pro-preview`) |
+| AI — Image + Text | **Gemini 3.1 Flash Image** (`gemini-3.1-flash-image-preview`) |
+| AI — Narration | **Gemini 2.5 Flash TTS** (`gemini-2.5-flash-preview-tts`, Aoede voice) |
+| AI SDK | **Google GenAI** (`@google/genai`) |
+| Styling | **Tailwind CSS 4** |
+| Typography | **Cormorant Garamond** + **Inter** (Google Fonts) |
+| Export | **jsPDF** (PDF), **JSZip** (ZIP/HTML/Markdown) |
+| Deploy | **Google Cloud Run** |
+
+## Setup
 
 ### Prerequisites
 
 - Node.js 20+
-- Google Cloud account with billing enabled
 - Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
 
 ### Local development
@@ -68,16 +96,57 @@ chmod +x deploy.sh
 ./deploy.sh
 ```
 
-## Architecture
+## Export Your Story
 
-See `docs/architecture.png` for the full architecture diagram.
+Once your story is complete, two export options appear:
+
+- **Save Story** — downloads a `.zip` containing:
+  - A styled `.html` file (open in any browser — Cormorant Garamond, justified layout, paintings, vignette)
+  - A `.md` file (for VS Code, GitHub, or any Markdown editor)
+  - An `images/` folder with each painting as a separate file
+- **Save as PDF** — generates a formatted A4 PDF with a title page, centered paintings with shadow, and justified serif prose
+
+You can also **download individual paintings** by hovering over any image in the story.
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── page.tsx           # Main story view + state management
+│   └── api/generate/
+│       └── route.ts       # SSE endpoint — orchestrates Gemini calls
+├── components/
+│   ├── StoryBook.tsx      # Story container with audio + choices
+│   ├── StoryPage.tsx      # Single page (painting + prose)
+│   ├── PaintingFrame.tsx  # Image frame with download button
+│   ├── PoemText.tsx       # Typewriter-animated prose
+│   ├── AudioPlayer.tsx    # Per-section audio with page seek
+│   ├── ChoiceButtons.tsx  # Branching choices + custom input
+│   ├── StoryInput.tsx     # Landing page / theme input
+│   └── LoadingState.tsx   # Generation loading animation
+└── lib/
+    ├── gemini.ts          # Gemini API calls (plan, generate, TTS)
+    ├── prompts.ts         # All system prompts + prompt builders
+    ├── export.ts          # PDF, HTML, Markdown, ZIP export
+    ├── pcm-to-wav.ts      # PCM → WAV conversion for TTS audio
+    └── types.ts           # Shared TypeScript types
+```
 
 ## Demo
 
 [Link to YouTube video]
 
-## Built for
+## License
 
-The **Gemini Live Agent Challenge** — Creative Storyteller category
+MIT
 
-#GeminiLiveAgentChallenge
+---
+
+<div align="center">
+
+Built for the **Gemini Live Agent Challenge 2026** on Devpost
+
+`#GeminiLiveAgentChallenge`
+
+</div>
