@@ -79,10 +79,16 @@ export async function POST(request: NextRequest) {
 
         // Step 2: Generate pages one at a time
         const pages = [];
+        let referenceImage: { data: string; mimeType: string } | undefined;
         for (let i = 0; i < plan.stanzas.length; i++) {
           const previousPassages = pages.map((p) => p.poem);
-          const page = await generateSinglePage(plan, i, previousPassages);
+          const page = await generateSinglePage(plan, i, previousPassages, referenceImage);
           pages.push(page);
+
+          // Use first page's image as style/character reference for the rest of the chapter
+          if (i === 0 && page.image.data) {
+            referenceImage = { data: page.image.data, mimeType: page.image.mimeType };
+          }
 
           send({ type: "stanza", page: page.pageNumber, poem: page.poem });
           send({

@@ -83,13 +83,23 @@ export async function planStory(
 export async function generateSinglePage(
   plan: StoryPlan,
   pageIndex: number,
-  previousPassages: string[]
+  previousPassages: string[],
+  referenceImage?: { data: string; mimeType: string }
 ): Promise<StoryPage> {
   const prompt = buildSinglePagePrompt(plan, pageIndex, previousPassages);
 
+  const inputParts: { text?: string; inlineData?: { data: string; mimeType: string } }[] = [];
+  if (referenceImage?.data) {
+    inputParts.push(
+      { text: "STYLE REFERENCE ONLY — use the image below strictly as a reference for art style, color palette, and character appearance. Do NOT copy, reproduce, overlay, or blend any part of this image into the new painting. Generate a completely new and independent scene." },
+      { inlineData: { data: referenceImage.data, mimeType: referenceImage.mimeType } }
+    );
+  }
+  inputParts.push({ text: prompt });
+
   const response = await ai.models.generateContent({
     model: MODELS.imagePoet,
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    contents: [{ role: "user", parts: inputParts }],
     config: {
       responseModalities: ["TEXT", "IMAGE"],
       systemInstruction: IMPRESSIONIST_PROSE_SYSTEM_PROMPT,
