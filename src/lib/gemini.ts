@@ -2,14 +2,31 @@ import { GoogleGenAI } from "@google/genai";
 import { StoryPlan, StoryPage } from "./types";
 import {
   STORY_PLANNER_SYSTEM_PROMPT,
-  IMPRESSIONIST_POET_SYSTEM_PROMPT,
+  IMPRESSIONIST_PROSE_SYSTEM_PROMPT,
   buildPlannerPrompt,
-  buildImagePrompt,
+  buildSinglePagePrompt,
   buildTTSPrompt,
 } from "./prompts";
 import { pcmToWav } from "./pcm-to-wav";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+
+/** Strip markdown formatting, headers, and model reasoning/meta-commentary from prose output. */
+function cleanProseOutput(raw: string): string {
+  const lines = raw.split("\n");
+  const cleaned = lines.filter((line) => {
+    const trimmed = line.trim();
+    // Remove markdown headers
+    if (trimmed.startsWith("#")) return false;
+    // Remove lines that are model reasoning / meta-commentary
+    if (/^(I will |I have |The image |Since (it|the|this) |The (artwork|painting|generation) |Visual continuity)/i.test(trimmed)) return false;
+    // Remove image placeholders and markdown artifacts
+    if (/^[\[\{(](image|img|painting|illustration)[\]\})]$/i.test(trimmed)) return false;
+    if (trimmed === "---" || trimmed === "***") return false;
+    return true;
+  });
+  return cleaned.join("\n").trim();
+}
 
 const MODELS = {
   planner: "gemini-3.1-pro-preview",
@@ -43,48 +60,49 @@ export async function planStory(
   return JSON.parse(text) as StoryPlan;
 }
 
-export async function generateInterleavedContent(
-  plan: StoryPlan
-): Promise<StoryPage[]> {
-  const prompt = buildImagePrompt(plan);
+export async function generateSinglePage(
+  plan: StoryPlan,
+  pageIndex: number,
+  previousPassages: string[]
+): Promise<StoryPage> {
+  const prompt = buildSinglePagePrompt(plan, pageIndex, previousPassages);
 
   const response = await ai.models.generateContent({
     model: MODELS.imagePoet,
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     config: {
       responseModalities: ["TEXT", "IMAGE"],
-      systemInstruction: IMPRESSIONIST_POET_SYSTEM_PROMPT,
+      systemInstruction: IMPRESSIONIST_PROSE_SYSTEM_PROMPT,
     },
   });
 
   const parts = response.candidates?.[0]?.content?.parts;
-  if (!parts) throw new Error("No response from image poet");
+  if (!parts) throw new Error("No response from image/prose generator");
 
-  const pages: StoryPage[] = [];
-  let currentPoem = "";
+  let prose = "";
+  let imageData = "";
+  let imageMime = "";
+  let imageFound = false;
 
   for (const part of parts) {
-    if (part.text) {
-      currentPoem += (currentPoem ? "\n" : "") + part.text.trim();
+    if (part.text && !imageFound) {
+      // Only collect text before the first image to avoid duplicates
+      prose += (prose ? "\n" : "") + part.text.trim();
     } else if (part.inlineData) {
-      pages.push({
-        pageNumber: pages.length + 1,
-        poem: currentPoem || `Stanza ${pages.length + 1}`,
-        image: {
-          data: part.inlineData.data!,
-          mimeType: part.inlineData.mimeType!,
-        },
-      });
-      currentPoem = "";
+      imageData = part.inlineData.data!;
+      imageMime = part.inlineData.mimeType!;
+      imageFound = true;
     }
   }
 
-  // If there's trailing text without an image, attach it to the last page
-  if (currentPoem && pages.length > 0) {
-    pages[pages.length - 1].poem += "\n\n" + currentPoem;
-  }
+  // Strip model reasoning, markdown headers, and meta-commentary
+  prose = cleanProseOutput(prose);
 
-  return pages;
+  return {
+    pageNumber: pageIndex + 1,
+    poem: prose || `Page ${pageIndex + 1}`,
+    image: { data: imageData, mimeType: imageMime },
+  };
 }
 
 export async function generateNarration(

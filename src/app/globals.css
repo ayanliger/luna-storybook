@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-canvas-cream: #FAF8F5;
-  --color-canvas-warm: #F5F0E8;
-  --color-canvas-linen: #EDE8DF;
-  --color-ink-primary: #2C2825;
-  --color-ink-secondary: #5C5650;
-  --color-ink-muted: #8C8680;
-  --color-accent-gold: #B8963E;
-  --color-accent-sage: #7A8C6E;
+  --color-canvas-cream: #FFFFFF;
+  --color-canvas-warm: #F7F7F8;
+  --color-canvas-linen: #E8E8EC;
+  --color-ink-primary: #1A1A1F;
+  --color-ink-secondary: #4A4A52;
+  --color-ink-muted: #8A8A94;
+  --color-accent-gold: #6E6E78;
+  --color-accent-sage: #5C5C66;
   --color-accent-slate: #6B7C8C;
   --font-serif: var(--font-cormorant);
   --font-sans: var(--font-inter);
@@ -58,5 +58,5 @@ body {
 .typewriter-cursor::after {
   content: '|';
   animation: typewriter-cursor 1s step-end infinite;
-  color: var(--color-accent-gold);
+  color: var(--color-ink-muted);
 }

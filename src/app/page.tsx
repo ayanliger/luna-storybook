@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import StoryInput from "@/components/StoryInput";
 import StoryBook from "@/components/StoryBook";
 import LoadingState from "@/components/LoadingState";
 import { StoryPage, SSEEvent } from "@/lib/types";
+import { exportMarkdown, exportPDF } from "@/lib/export";
 
 export default function Home() {
   const [title, setTitle] = useState("");
   const [pages, setPages] = useState<StoryPage[]>([]);
   const [choices, setChoices] = useState<{ label: string; theme: string }[]>([]);
-  const [audio, setAudio] = useState<{ data: string; mimeType: string } | undefined>();
+  const [audios, setAudios] = useState<Array<{ data: string; mimeType: string; startPage: number; endPage: number }>>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [error, setError] = useState("");
@@ -19,6 +20,7 @@ export default function Home() {
   // Context for continuation
   const [mood, setMood] = useState("");
   const [colorPalette, setColorPalette] = useState("");
+  const pageOffsetRef = useRef(0);
 
   const handleSSEEvent = useCallback(
     (event: SSEEvent) => {
@@ -27,11 +29,14 @@ export default function Home() {
           setStatusMessage(event.message as string);
           break;
         case "title":
-          setTitle(event.content as string);
+          // Only update title for the first chapter
+          if (pageOffsetRef.current === 0) {
+            setTitle(event.content as string);
+          }
           break;
-        case "stanza":
+        case "stanza": {
+          const pageNum = (event.page as number) + pageOffsetRef.current;
           setPages((prev) => {
-            const pageNum = event.page as number;
             const existing = prev.find((p) => p.pageNumber === pageNum);
             if (existing) {
               return prev.map((p) =>
@@ -50,10 +55,12 @@ export default function Home() {
             ];
           });
           break;
+        }
         case "image":
-          setPages((prev) =>
-            prev.map((p) =>
-              p.pageNumber === (event.page as number)
+          setPages((prev) => {
+            const pageNum = (event.page as number) + pageOffsetRef.current;
+            return prev.map((p) =>
+              p.pageNumber === pageNum
                 ? {
                     ...p,
                     image: {
@@ -62,15 +69,23 @@ export default function Home() {
                     },
                   }
                 : p
-            )
-          );
-          break;
-        case "audio":
-          setAudio({
-            data: event.data as string,
-            mimeType: event.mimeType as string,
+            );
           });
           break;
+        case "audio": {
+          const startPage = pageOffsetRef.current + 1;
+          const endPage = pageOffsetRef.current + 5;
+          setAudios((prev) => [
+            ...prev,
+            {
+              data: event.data as string,
+              mimeType: event.mimeType as string,
+              startPage,
+              endPage,
+            },
+          ]);
+          break;
+        }
         case "choices":
           setChoices(
             (event.options as { label: string; theme: string }[]) || []
@@ -92,15 +107,16 @@ export default function Home() {
       setHasStarted(true);
 
       if (isNewStory) {
+        pageOffsetRef.current = 0;
         setTitle("");
         setPages([]);
         setChoices([]);
-        setAudio(undefined);
+        setAudios([]);
         setMood("");
         setColorPalette("");
       } else {
+        pageOffsetRef.current = pages.length;
         setChoices([]);
-        setAudio(undefined);
       }
 
       try {
@@ -164,7 +180,14 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-canvas-cream">
+    <main className="min-h-screen bg-canvas-cream relative">
+      {/* Book-page vignette over entire page */}
+      <div
+        className="fixed inset-0 pointer-events-none z-10"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(26, 26, 31, 0.05) 100%)',
+        }}
+      />
       {error && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-red-50 border-b border-red-200 px-6 py-3 text-center">
           <p className="font-sans text-sm text-red-700">{error}</p>
@@ -186,7 +209,7 @@ export default function Home() {
           title={title}
           pages={pages.filter((p) => p.image.data)}
           choices={choices}
-          audio={audio}
+          audios={audios}
           onChoice={handleContinue}
           isGenerating={isGenerating}
         />
@@ -201,17 +224,43 @@ export default function Home() {
       )}
 
       {!isGenerating && pages.length > 0 && (
-        <div className="text-center py-12 border-t border-canvas-linen">
+        <div className="text-center py-12 border-t border-canvas-linen space-y-6">
+          {/* Save options */}
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={() => exportMarkdown(title, pages.filter((p) => p.image.data))}
+              className="flex items-center gap-2 px-5 py-3 font-sans text-xs tracking-widest uppercase
+                text-ink-secondary border border-canvas-linen
+                hover:border-ink-muted hover:text-ink-primary transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M7 1v9M4 7l3 3 3-3M2 12h10" />
+              </svg>
+              Save Story
+            </button>
+            <button
+              onClick={() => exportPDF(title, pages.filter((p) => p.image.data))}
+              className="flex items-center gap-2 px-5 py-3 font-sans text-xs tracking-widest uppercase
+                text-ink-secondary border border-canvas-linen
+                hover:border-ink-muted hover:text-ink-primary transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M7 1v9M4 7l3 3 3-3M2 12h10" />
+              </svg>
+              Save as PDF
+            </button>
+          </div>
+
           <button
             onClick={() => {
               setHasStarted(false);
               setPages([]);
               setTitle("");
               setChoices([]);
-              setAudio(undefined);
+              setAudios([]);
             }}
             className="font-sans text-xs text-ink-muted uppercase tracking-widest
-              hover:text-accent-gold transition-colors"
+              hover:text-ink-primary transition-colors"
           >
             Start a new story
           </button>

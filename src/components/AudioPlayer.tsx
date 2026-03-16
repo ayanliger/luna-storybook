@@ -1,23 +1,43 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 interface AudioPlayerProps {
   data: string;
   mimeType: string;
+  startPage: number;
+  endPage: number;
 }
 
-export default function AudioPlayer({ data, mimeType }: AudioPlayerProps) {
+export default function AudioPlayer({ data, mimeType, startPage, endPage }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [activePage, setActivePage] = useState<number | null>(null);
+  const totalPages = endPage - startPage + 1;
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    const onEnded = () => setIsPlaying(false);
+    const onEnded = () => {
+      setIsPlaying(false);
+      setActivePage(null);
+    };
+    const onTimeUpdate = () => {
+      if (!audio.duration) return;
+      const progress = audio.currentTime / audio.duration;
+      const currentPage = Math.min(
+        startPage + Math.floor(progress * totalPages),
+        endPage
+      );
+      setActivePage(currentPage);
+    };
     audio.addEventListener("ended", onEnded);
-    return () => audio.removeEventListener("ended", onEnded);
-  }, []);
+    audio.addEventListener("timeupdate", onTimeUpdate);
+    return () => {
+      audio.removeEventListener("ended", onEnded);
+      audio.removeEventListener("timeupdate", onTimeUpdate);
+    };
+  }, [startPage, endPage, totalPages]);
 
   const toggle = () => {
     const audio = audioRef.current;
@@ -30,15 +50,30 @@ export default function AudioPlayer({ data, mimeType }: AudioPlayerProps) {
     setIsPlaying(!isPlaying);
   };
 
+  const seekToPage = useCallback((pageNum: number) => {
+    const audio = audioRef.current;
+    if (!audio || !audio.duration) return;
+    const pageIndex = pageNum - startPage;
+    audio.currentTime = (pageIndex / totalPages) * audio.duration;
+    if (!isPlaying) {
+      audio.play();
+      setIsPlaying(true);
+    }
+  }, [startPage, totalPages, isPlaying]);
+
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => startPage + i);
+
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-col items-center gap-3">
       <audio ref={audioRef} src={`data:${mimeType};base64,${data}`} />
+
+      {/* Main play/pause button */}
       <button
         onClick={toggle}
         className="flex items-center gap-2 px-4 py-2 font-sans text-xs tracking-widest uppercase
-          text-ink-secondary border border-canvas-linen hover:border-accent-gold
-          hover:text-accent-gold transition-colors"
-        aria-label={isPlaying ? "Pause narration" : "Listen to narration"}
+          text-ink-secondary border border-canvas-linen hover:border-ink-muted
+          hover:text-ink-primary transition-colors"
+        aria-label={isPlaying ? "Pause narration" : `Listen to pages ${startPage}–${endPage}`}
       >
         {isPlaying ? (
           <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
@@ -50,8 +85,26 @@ export default function AudioPlayer({ data, mimeType }: AudioPlayerProps) {
             <path d="M3 1.5v11l9-5.5z" />
           </svg>
         )}
-        <span>{isPlaying ? "Pause" : "Listen"}</span>
+        <span>{isPlaying ? "Pause" : `Listen · pages ${startPage}–${endPage}`}</span>
       </button>
+
+      {/* Per-page seek buttons */}
+      <div className="flex items-center gap-1">
+        {pageNumbers.map((num) => (
+          <button
+            key={num}
+            onClick={() => seekToPage(num)}
+            className={`w-7 h-7 rounded-full font-sans text-[10px] transition-colors
+              ${activePage === num
+                ? "bg-ink-primary/10 text-ink-primary border border-ink-muted/40"
+                : "text-ink-muted hover:text-ink-primary hover:bg-ink-primary/5 border border-transparent"
+              }`}
+            aria-label={`Jump to page ${num}`}
+          >
+            {num}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
