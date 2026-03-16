@@ -139,10 +139,13 @@ export async function POST(request: NextRequest) {
         send({ type: "done" });
       } catch (err) {
         console.error("Generation error:", err);
+        const cause = err instanceof Error ? (err.cause as Error)?.code ?? err.message : "";
+        const isTimeout = cause === "UND_ERR_HEADERS_TIMEOUT" || cause === "UND_ERR_CONNECT_TIMEOUT";
         send({
           type: "error",
-          message:
-            err instanceof Error ? err.message : "Something went wrong.",
+          message: isTimeout
+            ? "Luna took too long to respond. Please try again."
+            : err instanceof Error ? err.message : "Something went wrong.",
         });
       } finally {
         controller.close();

@@ -16,9 +16,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Luna — Interactive Impressionist Poetry Storybook",
+  title: "Luna - Interactive Storybook",
   description:
-    "An AI-powered storyteller that generates impressionist paintings paired with original poetry, narrated by an expressive AI voice.",
+    "An AI-powered storyteller that generates impressionist paintings paired with narration, brought to life by an expressive AI voice.",
 };
 
 export default function RootLayout({

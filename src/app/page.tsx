@@ -135,7 +135,10 @@ export default function Home() {
           body: JSON.stringify({ theme, previousContext }),
         });
 
-        if (!response.ok) throw new Error("Failed to start generation");
+        if (!response.ok) {
+          const err = await response.json().catch(() => null);
+          throw new Error(err?.error || "Failed to start generation");
+        }
         if (!response.body) throw new Error("No response stream");
 
         const reader = response.body.getReader();
