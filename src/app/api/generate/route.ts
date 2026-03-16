@@ -54,7 +54,8 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // Step 3: Generate TTS narration
+        // Step 3: Generate TTS narration (delay to avoid rate limiting after image calls)
+        await new Promise((r) => setTimeout(r, 3000));
         send({
           type: "status",
           message: "Finding the voice for your story...",
@@ -69,9 +70,22 @@ export async function POST(request: NextRequest) {
             data: audio.data,
             mimeType: audio.mimeType,
           });
-        } catch {
-          // TTS failure is non-critical — story works without audio
-          console.error("TTS generation failed, continuing without audio");
+        } catch (ttsErr) {
+          console.error("TTS generation failed:", ttsErr);
+          // Retry once after a short delay
+          try {
+            await new Promise((r) => setTimeout(r, 2000));
+            const fullPoem = pages.map((p) => p.poem).join("\n\n");
+            const audio = await generateNarration(fullPoem);
+            send({
+              type: "audio",
+              page: 0,
+              data: audio.data,
+              mimeType: audio.mimeType,
+            });
+          } catch (retryErr) {
+            console.error("TTS retry also failed:", retryErr);
+          }
         }
 
         // Send branching choices

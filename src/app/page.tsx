@@ -28,7 +28,10 @@ export default function Home() {
           setStatusMessage(event.message as string);
           break;
         case "title":
-          setTitle(event.content as string);
+          // Only update title for the first chapter
+          if (pageOffsetRef.current === 0) {
+            setTitle(event.content as string);
+          }
           break;
         case "stanza": {
           const pageNum = (event.page as number) + pageOffsetRef.current;

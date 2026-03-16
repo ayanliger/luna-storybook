@@ -20,7 +20,8 @@ function cleanProseOutput(raw: string): string {
     if (trimmed.startsWith("#")) return false;
     // Remove lines that are model reasoning / meta-commentary
     if (/^(I will |I have |The image |Since (it|the|this) |The (artwork|painting|generation) |Visual continuity)/i.test(trimmed)) return false;
-    // Remove empty markdown artifacts
+    // Remove image placeholders and markdown artifacts
+    if (/^\[IMAGE\]$|^\[image\]$|^\[painting\]$|^\[img\]$/i.test(trimmed)) return false;
     if (trimmed === "---" || trimmed === "***") return false;
     return true;
   });
