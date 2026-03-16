@@ -35,7 +35,7 @@ export default function PoemText({ text, animate = true }: PoemTextProps) {
   }, [text, animate]);
 
   return (
-    <div className="font-serif text-lg md:text-xl text-ink-primary leading-[1.9] whitespace-pre-line">
+    <div className="font-serif text-lg md:text-xl text-ink-primary leading-[1.9] whitespace-pre-line text-justify" style={{ textIndent: '0em' }}>
       <span>{text.slice(0, displayedLength)}</span>
       {!isComplete && <span className="typewriter-cursor" />}
     </div>
