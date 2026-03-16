@@ -33,7 +33,7 @@ export default function StoryBook({
     <div className="min-h-screen">
       {/* Title */}
       {title && (
-        <header className="text-center pt-10 pb-0 md:pt-16 md:pb-0 animate-fade-in">
+        <header className="text-center pt-10 pb-3 md:pt-16 md:pb-4 animate-fade-in">
           <h2 className="font-serif text-4xl md:text-6xl font-light text-ink-primary tracking-tight">
             {title}
           </h2>
