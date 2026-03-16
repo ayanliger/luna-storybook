@@ -2,16 +2,14 @@
 
 import PoemText from "./PoemText";
 import PaintingFrame from "./PaintingFrame";
-import AudioPlayer from "./AudioPlayer";
 import { StoryPage as StoryPageType } from "@/lib/types";
 
 interface StoryPageProps {
   page: StoryPageType;
   isLatest: boolean;
-  audio?: { data: string; mimeType: string };
 }
 
-export default function StoryPage({ page, isLatest, audio }: StoryPageProps) {
+export default function StoryPage({ page, isLatest }: StoryPageProps) {
   return (
     <section
       className="animate-slide-up"
@@ -32,10 +30,9 @@ export default function StoryPage({ page, isLatest, audio }: StoryPageProps) {
           />
         </div>
 
-        {/* Prose + Audio */}
-        <div className="max-w-2xl mx-auto px-6 space-y-8">
+        {/* Prose */}
+        <div className="max-w-2xl mx-auto px-6">
           <PoemText text={page.poem} animate={isLatest} />
-          {audio && <AudioPlayer data={audio.data} mimeType={audio.mimeType} />}
         </div>
       </div>
 

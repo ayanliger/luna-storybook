@@ -10,7 +10,7 @@ export default function Home() {
   const [title, setTitle] = useState("");
   const [pages, setPages] = useState<StoryPage[]>([]);
   const [choices, setChoices] = useState<{ label: string; theme: string }[]>([]);
-  const [audio, setAudio] = useState<{ data: string; mimeType: string } | undefined>();
+  const [audios, setAudios] = useState<Array<{ data: string; mimeType: string; startPage: number; endPage: number }>>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [error, setError] = useState("");
@@ -71,12 +71,20 @@ export default function Home() {
             );
           });
           break;
-        case "audio":
-          setAudio({
-            data: event.data as string,
-            mimeType: event.mimeType as string,
-          });
+        case "audio": {
+          const startPage = pageOffsetRef.current + 1;
+          const endPage = pageOffsetRef.current + 5;
+          setAudios((prev) => [
+            ...prev,
+            {
+              data: event.data as string,
+              mimeType: event.mimeType as string,
+              startPage,
+              endPage,
+            },
+          ]);
           break;
+        }
         case "choices":
           setChoices(
             (event.options as { label: string; theme: string }[]) || []
@@ -102,13 +110,12 @@ export default function Home() {
         setTitle("");
         setPages([]);
         setChoices([]);
-        setAudio(undefined);
+        setAudios([]);
         setMood("");
         setColorPalette("");
       } else {
         pageOffsetRef.current = pages.length;
         setChoices([]);
-        setAudio(undefined);
       }
 
       try {
@@ -194,7 +201,7 @@ export default function Home() {
           title={title}
           pages={pages.filter((p) => p.image.data)}
           choices={choices}
-          audio={audio}
+          audios={audios}
           onChoice={handleContinue}
           isGenerating={isGenerating}
         />
@@ -216,7 +223,7 @@ export default function Home() {
               setPages([]);
               setTitle("");
               setChoices([]);
-              setAudio(undefined);
+              setAudios([]);
             }}
             className="font-sans text-xs text-ink-muted uppercase tracking-widest
               hover:text-accent-gold transition-colors"
