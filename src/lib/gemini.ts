@@ -21,7 +21,7 @@ function cleanProseOutput(raw: string): string {
     // Remove lines that are model reasoning / meta-commentary
     if (/^(I will |I have |The image |Since (it|the|this) |The (artwork|painting|generation) |Visual continuity)/i.test(trimmed)) return false;
     // Remove image placeholders and markdown artifacts
-    if (/^\[IMAGE\]$|^\[image\]$|^\[painting\]$|^\[img\]$/i.test(trimmed)) return false;
+    if (/^[\[\{(](image|img|painting|illustration)[\]\})]$/i.test(trimmed)) return false;
     if (trimmed === "---" || trimmed === "***") return false;
     return true;
   });
