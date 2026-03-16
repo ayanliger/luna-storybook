@@ -5,6 +5,7 @@
 **An interactive visual novel storybook powered by Gemini AI**
 
 [![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev/)
 [![Tailwind](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
@@ -13,7 +14,7 @@
 
 Give Luna a theme, and she will paint your story.
 
-[Demo](#demo) · [How It Works](#how-it-works) · [Setup](#setup) · [Export](#export-your-story)
+[Demo](#demo) · [How It Works](#how-it-works) · [Features](#features) · [Setup](#setup) · [Export](#export-your-story)
 
 </div>
 
@@ -28,36 +29,41 @@ A theme like *"a shallow pool among jagged rocks at sunset"* becomes a 5-page in
 ## How It Works
 
 ```
-Browser (Next.js / React)
-    │  SSE stream
+Browser (Next.js / React 19)
+    │  SSE stream (per-page)
     ▼
 Server (Next.js API Routes)
     │
-    ├── Gemini 3.1 Pro         → Story plan (5 scenes, palette, choices)
+    ├── Gemini 3.1 Pro         → Story plan (5 scenes, palette, characters, choices)
     ├── Gemini 3.1 Flash Image → Painting + narration per page
+    │     └── page 1 image passed as style reference → pages 2–5
     └── Gemini 2.5 Flash TTS   → Spoken narration (Aoede voice)
 ```
 
-1. You enter a theme or scenario
-2. **Gemini 3.1 Pro** produces a structured story plan — title, mood, color palette, 5 scene descriptions, and branching choices
-3. **Gemini 3.1 Flash Image** generates each page one at a time: 1–2 sentences of narration + an impressionist painting, streamed to your browser via SSE as each page completes
-4. **Gemini 2.5 Flash TTS** narrates the full section with the Aoede voice
-5. After page 5, you choose a direction to continue — the story branches into a new 5-page chapter, with full continuity of title, mood, palette, and narrative
+1. You enter a theme or pick a suggestion
+2. **Gemini 3.1 Pro** produces a structured story plan — title, mood, color palette, character descriptions, 5 scene outlines, and branching choices
+3. **Gemini 3.1 Flash Image** generates each page one at a time: 1–2 sentences of narration + an impressionist painting, streamed to your browser via SSE as each page completes. The first page's painting is fed back as a **style reference** to keep subsequent pages visually consistent
+4. **Gemini 2.5 Flash TTS** narrates the full section aloud with the Aoede voice
+5. After page 5, you choose a direction to continue — or write your own — and the story branches into a new 5-page chapter with full continuity of title, mood, palette, and narrative
 
 ## Features
 
 - **Per-page incremental rendering** — each painting and passage appears as it's generated, not all at once
+- **Visual style consistency** — the first painting is used as a style reference for all subsequent pages in the same chapter
 - **Branching narrative** — choose from AI-generated options or write your own direction (120-char limit, sanitized)
 - **Persistent audio** — TTS narration persists across story sections with per-page seek
 - **Story export** — save your story as a **PDF** (serif type, justified layout, centered paintings) or a **ZIP** containing styled HTML + Markdown + separate image files
 - **Per-painting download** — hover any painting for a download button
-- **Silvery, cool aesthetic** — Cormorant Garamond serif, justified text with typewriter animation, vignette overlays, and a monochrome silver palette
+- **Graceful error recovery** — per-page retry on generation failure, with the option to resume from the failed page
+- **Rate limiting** — 10 generations per hour per IP in production
+- **Safety filters** — all Gemini calls use `BLOCK_LOW_AND_ABOVE` across all harm categories
+- **Silvery, book-page aesthetic** — Cormorant Garamond serif, justified text with typewriter animation, vignette overlays, and a monochrome silver palette
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Framework | **Next.js 16** (App Router, TypeScript) |
+| Framework | **Next.js 16** (App Router, React 19, TypeScript) |
 | AI — Planning | **Gemini 3.1 Pro** (`gemini-3.1-pro-preview`) |
 | AI — Image + Text | **Gemini 3.1 Flash Image** (`gemini-3.1-flash-image-preview`) |
 | AI — Narration | **Gemini 2.5 Flash TTS** (`gemini-2.5-flash-preview-tts`, Aoede voice) |
@@ -65,7 +71,7 @@ Server (Next.js API Routes)
 | Styling | **Tailwind CSS 4** |
 | Typography | **Cormorant Garamond** + **Inter** (Google Fonts) |
 | Export | **jsPDF** (PDF), **JSZip** (ZIP/HTML/Markdown) |
-| Deploy | **Google Cloud Run** |
+| Deploy | **Google Cloud Run** (standalone build) |
 
 ## Setup
 
@@ -92,6 +98,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ```bash
 export GCP_PROJECT_ID=your-project-id
 export GEMINI_API_KEY=your-api-key
+# Optional: export GCP_REGION=us-central1
 chmod +x deploy.sh
 ./deploy.sh
 ```
@@ -113,33 +120,38 @@ You can also **download individual paintings** by hovering over any image in the
 ```
 src/
 ├── app/
-│   ├── page.tsx           # Main story view + state management
-│   └── api/generate/
-│       └── route.ts       # SSE endpoint — orchestrates Gemini calls
+│   ├── layout.tsx          # Root layout — fonts, metadata
+│   ├── page.tsx            # Main story view + state management
+│   ├── globals.css         # Tailwind theme, custom animations
+│   └── api/
+│       ├── generate/
+│       │   └── route.ts    # SSE endpoint — orchestrates Gemini calls
+│       └── health/
+│           └── route.ts    # Health check
 ├── components/
-│   ├── StoryBook.tsx      # Story container with audio + choices
-│   ├── StoryPage.tsx      # Single page (painting + prose)
-│   ├── PaintingFrame.tsx  # Image frame with download button
-│   ├── PoemText.tsx       # Typewriter-animated prose
-│   ├── AudioPlayer.tsx    # Per-section audio with page seek
-│   ├── ChoiceButtons.tsx  # Branching choices + custom input
-│   ├── StoryInput.tsx     # Landing page / theme input
-│   └── LoadingState.tsx   # Generation loading animation
+│   ├── StoryBook.tsx       # Story container with audio + choices
+│   ├── StoryPage.tsx       # Single page (painting + prose)
+│   ├── PaintingFrame.tsx   # Image frame with download button
+│   ├── PoemText.tsx        # Typewriter-animated prose
+│   ├── AudioPlayer.tsx     # Per-section audio with page seek
+│   ├── ChoiceButtons.tsx   # Branching choices + custom input
+│   ├── StoryInput.tsx      # Landing page / theme input
+│   └── LoadingState.tsx    # Generation loading animation
 └── lib/
-    ├── gemini.ts          # Gemini API calls (plan, generate, TTS)
-    ├── prompts.ts         # All system prompts + prompt builders
-    ├── export.ts          # PDF, HTML, Markdown, ZIP export
-    ├── pcm-to-wav.ts      # PCM → WAV conversion for TTS audio
-    └── types.ts           # Shared TypeScript types
+    ├── gemini.ts           # Gemini API calls (plan, generate, TTS)
+    ├── prompts.ts          # All system prompts + prompt builders
+    ├── export.ts           # PDF, HTML, Markdown, ZIP export
+    ├── pcm-to-wav.ts       # PCM → WAV conversion for TTS audio
+    └── types.ts            # Shared TypeScript types
 ```
 
 ## Demo
 
-[Link to YouTube video]
+*Coming soon — video walkthrough will be linked here.*
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE) for details.
 
 ---
 

@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { StoryPlan, StoryPage } from "./types";
 import {
   STORY_PLANNER_SYSTEM_PROMPT,
@@ -10,6 +10,25 @@ import {
 import { pcmToWav } from "./pcm-to-wav";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+
+const SAFETY_SETTINGS = [
+  {
+    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+    threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+    threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+    threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+  },
+];
 
 /** Strip markdown formatting, headers, and model reasoning/meta-commentary from prose output. */
 function cleanProseOutput(raw: string): string {
@@ -51,6 +70,7 @@ export async function planStory(
     config: {
       responseMimeType: "application/json",
       systemInstruction: STORY_PLANNER_SYSTEM_PROMPT,
+      safetySettings: SAFETY_SETTINGS,
     },
   });
 
@@ -63,16 +83,27 @@ export async function planStory(
 export async function generateSinglePage(
   plan: StoryPlan,
   pageIndex: number,
-  previousPassages: string[]
+  previousPassages: string[],
+  referenceImage?: { data: string; mimeType: string }
 ): Promise<StoryPage> {
   const prompt = buildSinglePagePrompt(plan, pageIndex, previousPassages);
 
+  const inputParts: { text?: string; inlineData?: { data: string; mimeType: string } }[] = [];
+  if (referenceImage?.data) {
+    inputParts.push(
+      { text: "STYLE REFERENCE ONLY — use the image below strictly as a reference for art style, color palette, and character appearance. Do NOT copy, reproduce, overlay, or blend any part of this image into the new painting. Generate a completely new and independent scene." },
+      { inlineData: { data: referenceImage.data, mimeType: referenceImage.mimeType } }
+    );
+  }
+  inputParts.push({ text: prompt });
+
   const response = await ai.models.generateContent({
     model: MODELS.imagePoet,
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    contents: [{ role: "user", parts: inputParts }],
     config: {
       responseModalities: ["TEXT", "IMAGE"],
       systemInstruction: IMPRESSIONIST_PROSE_SYSTEM_PROMPT,
+      safetySettings: SAFETY_SETTINGS,
     },
   });
 
@@ -115,6 +146,7 @@ export async function generateNarration(
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     config: {
       responseModalities: ["AUDIO"],
+      safetySettings: SAFETY_SETTINGS,
       speechConfig: {
         voiceConfig: {
           prebuiltVoiceConfig: {

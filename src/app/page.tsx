@@ -4,7 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import StoryInput from "@/components/StoryInput";
 import StoryBook from "@/components/StoryBook";
 import LoadingState from "@/components/LoadingState";
-import { StoryPage, SSEEvent } from "@/lib/types";
+import { StoryPage, StoryPlan, SSEEvent } from "@/lib/types";
 import { exportMarkdown, exportPDF } from "@/lib/export";
 
 export default function Home() {
@@ -21,6 +21,10 @@ export default function Home() {
   const [mood, setMood] = useState("");
   const [colorPalette, setColorPalette] = useState("");
   const pageOffsetRef = useRef(0);
+
+  // Plan + retry state
+  const [currentPlan, setCurrentPlan] = useState<StoryPlan | null>(null);
+  const [failedPage, setFailedPage] = useState<number | null>(null);
 
   const handleSSEEvent = useCallback(
     (event: SSEEvent) => {
@@ -86,10 +90,17 @@ export default function Home() {
           ]);
           break;
         }
+        case "plan":
+          setCurrentPlan(event.plan as StoryPlan);
+          break;
         case "choices":
           setChoices(
             (event.options as { label: string; theme: string }[]) || []
           );
+          break;
+        case "partial":
+          setFailedPage(event.failedPage as number);
+          setError(event.message as string);
           break;
         case "error":
           setError(event.message as string);
@@ -100,9 +111,14 @@ export default function Home() {
   );
 
   const generate = useCallback(
-    async (theme: string, isNewStory: boolean) => {
+    async (
+      theme: string,
+      isNewStory: boolean,
+      resumeFrom?: { plan: StoryPlan; completedPassages: string[]; startPage: number }
+    ) => {
       setIsGenerating(true);
       setError("");
+      setFailedPage(null);
       setStatusMessage("Luna is composing your story...");
       setHasStarted(true);
 
@@ -114,7 +130,7 @@ export default function Home() {
         setAudios([]);
         setMood("");
         setColorPalette("");
-      } else {
+      } else if (!resumeFrom) {
         pageOffsetRef.current = pages.length;
         setChoices([]);
       }
@@ -132,10 +148,13 @@ export default function Home() {
         const response = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ theme, previousContext }),
+          body: JSON.stringify({ theme, previousContext, resumeFrom }),
         });
 
-        if (!response.ok) throw new Error("Failed to start generation");
+        if (!response.ok) {
+          const err = await response.json().catch(() => null);
+          throw new Error(err?.error || "Failed to start generation");
+        }
         if (!response.body) throw new Error("No response stream");
 
         const reader = response.body.getReader();
@@ -174,6 +193,15 @@ export default function Home() {
 
   const handleNewStory = (theme: string) => generate(theme, true);
   const handleContinue = (theme: string) => generate(theme, false);
+  const handleRetry = useCallback(() => {
+    if (!currentPlan || failedPage === null) return;
+    const completedPassages = pages.map((p) => p.poem);
+    generate(title, false, {
+      plan: currentPlan,
+      completedPassages,
+      startPage: failedPage - 1,
+    });
+  }, [currentPlan, failedPage, pages, title, generate]);
 
   if (!hasStarted) {
     return <StoryInput onSubmit={handleNewStory} isGenerating={isGenerating} />;
@@ -191,12 +219,22 @@ export default function Home() {
       {error && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-red-50 border-b border-red-200 px-6 py-3 text-center">
           <p className="font-sans text-sm text-red-700">{error}</p>
-          <button
-            onClick={() => setError("")}
-            className="ml-4 text-red-500 hover:text-red-700 text-xs uppercase tracking-widest"
-          >
-            Dismiss
-          </button>
+          <div className="mt-2 flex justify-center gap-4">
+            {failedPage !== null && currentPlan && (
+              <button
+                onClick={handleRetry}
+                className="text-ink-primary hover:text-ink-secondary text-xs uppercase tracking-widest font-medium"
+              >
+                Retry page {failedPage}
+              </button>
+            )}
+            <button
+              onClick={() => { setError(""); setFailedPage(null); }}
+              className="text-red-500 hover:text-red-700 text-xs uppercase tracking-widest"
+            >
+              Dismiss
+            </button>
+          </div>
         </div>
       )}
 

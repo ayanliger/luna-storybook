@@ -40,6 +40,24 @@ export default function StoryInput({
       <div className="max-w-2xl w-full text-center space-y-10 relative z-0">
         {/* Title */}
         <div className="space-y-4">
+          {/* Luna icon — crescent moon */}
+          <div className="flex justify-center mb-5">
+            <svg
+              width="72"
+              height="72"
+              viewBox="0 0 72 72"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="animate-fade-in"
+              aria-hidden="true"
+            >
+              <path
+                d="M30 14c-12.15 0-22 9.85-22 22s9.85 22 22 22c3.87 0 7.51-1 10.66-2.76A18 18 0 0 1 24 36a18 18 0 0 1 16.66-17.96A21.85 21.85 0 0 0 30 14Z"
+                fill="currentColor"
+                className="text-ink-primary"
+              />
+            </svg>
+          </div>
           <h1 className="font-serif text-7xl font-light text-ink-primary tracking-tight">
             Luna
           </h1>

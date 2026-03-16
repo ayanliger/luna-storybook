@@ -15,6 +15,7 @@ export interface StoryPlan {
   title: string;
   mood: string;
   colorPalette: string;
+  characters?: { name: string; appearance: string }[];
   stanzas: StanzaPlan[];
   choices: StoryChoice[];
 }
@@ -45,11 +46,13 @@ export interface SSEEvent {
   type:
     | "status"
     | "title"
+    | "plan"
     | "stanza"
     | "image"
     | "audio"
     | "choices"
     | "done"
+    | "partial"
     | "error";
   [key: string]: unknown;
 }
@@ -62,4 +65,9 @@ export interface GenerateRequest {
     colorPalette: string;
     previousStanzas: string[];
   } | null;
+  resumeFrom?: {
+    plan: StoryPlan;
+    completedPassages: string[];
+    startPage: number;
+  };
 }
