@@ -15,6 +15,7 @@ export interface StoryPlan {
   title: string;
   mood: string;
   colorPalette: string;
+  characters?: { name: string; appearance: string }[];
   stanzas: StanzaPlan[];
   choices: StoryChoice[];
 }

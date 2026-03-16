@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
         send({ type: "done" });
       } catch (err) {
         console.error("Generation error:", err);
-        const cause = err instanceof Error ? (err.cause as Error)?.code ?? err.message : "";
+        const cause = err instanceof Error ? (err.cause as Record<string, unknown>)?.code ?? err.message : "";
         const isTimeout = cause === "UND_ERR_HEADERS_TIMEOUT" || cause === "UND_ERR_CONNECT_TIMEOUT";
         send({
           type: "error",

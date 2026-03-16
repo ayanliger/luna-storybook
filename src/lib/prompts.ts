@@ -19,6 +19,12 @@ Return ONLY valid JSON matching this schema exactly:
   "title": "string — story title",
   "mood": "string — dominant tone",
   "colorPalette": "string — 3-5 specific colors/tones for visual coherence",
+  "characters": [
+    {
+      "name": "string — character name",
+      "appearance": "string — concise physical description: hair color/style, clothing, distinguishing features, approximate age. Be specific enough to recreate consistently across illustrations."
+    }
+  ],
   "stanzas": [
     {
       "stanzaNumber": 1,
@@ -33,7 +39,8 @@ Return ONLY valid JSON matching this schema exactly:
       "themeDirection": "string — what this choice means for the next chapter"
     }
   ]
-}`;
+}
+IMPORTANT: The "characters" array should ONLY be included if the story features recurring characters that appear across multiple pages. If the story is purely scenic or atmospheric with no recurring figures, omit the "characters" field or leave it as an empty array.`;
 
 export const IMPRESSIONIST_PROSE_SYSTEM_PROMPT = `You are Luna, an interactive visual novel narrator. You write brief, clear narration that describes what is happening in the scene — like a storybook caption. 1-2 sentences maximum. Be concrete and accessible: say what the reader can see, hear, or feel in the moment. No abstract poetry, no literary flourishes.
 
@@ -90,11 +97,15 @@ export function buildSinglePagePrompt(
     ? `\nPrevious passages for continuity:\n${previousPassages.map((p, i) => `Page ${i + 1}: ${p}`).join("\n")}\n`
     : "";
 
+  const characterBlock = plan.characters?.length
+    ? `\nRecurring characters (maintain consistent appearance):\n${plan.characters.map((c) => `- ${c.name}: ${c.appearance}`).join("\n")}\n`
+    : "";
+
   return `Illustrated storybook: "${plan.title}"
 Mood: ${plan.mood}
 Color palette: ${plan.colorPalette}
 Art style: impressionist painting; abstract digital brushwork
-${context}
+${characterBlock}${context}
 Write page ${stanza.stanzaNumber} of 5.
 Theme: ${stanza.poeticTheme}
 Visual scene: impressionist painting; abstract digital brushwork — ${stanza.visualScene}
