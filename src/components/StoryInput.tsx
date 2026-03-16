@@ -29,17 +29,24 @@ export default function StoryInput({
   ];
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-6">
-      <div className="max-w-2xl w-full text-center space-y-10">
+    <div className="flex flex-col items-center justify-center min-h-screen px-6 relative">
+      {/* Book-page vignette */}
+      <div
+        className="fixed inset-0 pointer-events-none z-10"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(44, 40, 37, 0.06) 100%)',
+        }}
+      />
+      <div className="max-w-2xl w-full text-center space-y-10 relative z-0">
         {/* Title */}
         <div className="space-y-4">
           <h1 className="font-serif text-7xl font-light text-ink-primary tracking-tight">
             Luna
           </h1>
           <p className="font-sans text-lg text-ink-muted leading-relaxed max-w-md mx-auto">
-            An impressionist poetry storybook.
+            An interactive visual novel storybook.
             <br />
-            Give Luna a theme, and she will paint it into verse.
+            Give Luna a theme, and she will paint your story.
           </p>
         </div>
 
