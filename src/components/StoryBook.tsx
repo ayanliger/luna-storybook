@@ -51,6 +51,7 @@ export default function StoryBook({
             <StoryPageComponent
               page={page}
               isLatest={page.pageNumber === pages.length}
+              storyTitle={title}
             />
             {sectionAudio && (
               <div className="flex justify-center py-6">

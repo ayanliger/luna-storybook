@@ -7,9 +7,10 @@ import { StoryPage as StoryPageType } from "@/lib/types";
 interface StoryPageProps {
   page: StoryPageType;
   isLatest: boolean;
+  storyTitle?: string;
 }
 
-export default function StoryPage({ page, isLatest }: StoryPageProps) {
+export default function StoryPage({ page, isLatest, storyTitle }: StoryPageProps) {
   return (
     <section
       className="animate-slide-up"
@@ -22,6 +23,8 @@ export default function StoryPage({ page, isLatest }: StoryPageProps) {
             data={page.image.data}
             mimeType={page.image.mimeType}
             alt={`Impressionist painting for page ${page.pageNumber}`}
+            pageNumber={page.pageNumber}
+            storyTitle={storyTitle}
           />
         </div>
 
