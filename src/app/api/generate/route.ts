@@ -8,7 +8,33 @@ import {
 
 export const maxDuration = 300;
 
+const MAX_THEME_LENGTH = 200;
+const RATE_LIMIT = 10;
+const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const ipHistory = new Map<string, number[]>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const timestamps = (ipHistory.get(ip) ?? []).filter(
+    (t) => now - t < RATE_WINDOW_MS
+  );
+  ipHistory.set(ip, timestamps);
+  if (timestamps.length >= RATE_LIMIT) return true;
+  timestamps.push(now);
+  return false;
+}
+
 export async function POST(request: NextRequest) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+
+  if (process.env.NODE_ENV !== "development" && isRateLimited(ip)) {
+    return new Response(
+      JSON.stringify({ error: "Too many requests. Please try again later." }),
+      { status: 429, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
   const body: GenerateRequest = await request.json();
 
   if (!body.theme?.trim()) {
@@ -16,6 +42,13 @@ export async function POST(request: NextRequest) {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
+  }
+
+  if (body.theme.length > MAX_THEME_LENGTH) {
+    return new Response(
+      JSON.stringify({ error: `Theme must be ${MAX_THEME_LENGTH} characters or fewer.` }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
   }
 
   const encoder = new TextEncoder();

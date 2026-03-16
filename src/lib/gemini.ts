@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { StoryPlan, StoryPage } from "./types";
 import {
   STORY_PLANNER_SYSTEM_PROMPT,
@@ -10,6 +10,25 @@ import {
 import { pcmToWav } from "./pcm-to-wav";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+
+const SAFETY_SETTINGS = [
+  {
+    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+    threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+    threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+    threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+  },
+];
 
 /** Strip markdown formatting, headers, and model reasoning/meta-commentary from prose output. */
 function cleanProseOutput(raw: string): string {
@@ -51,6 +70,7 @@ export async function planStory(
     config: {
       responseMimeType: "application/json",
       systemInstruction: STORY_PLANNER_SYSTEM_PROMPT,
+      safetySettings: SAFETY_SETTINGS,
     },
   });
 
@@ -73,6 +93,7 @@ export async function generateSinglePage(
     config: {
       responseModalities: ["TEXT", "IMAGE"],
       systemInstruction: IMPRESSIONIST_PROSE_SYSTEM_PROMPT,
+      safetySettings: SAFETY_SETTINGS,
     },
   });
 
@@ -115,6 +136,7 @@ export async function generateNarration(
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     config: {
       responseModalities: ["AUDIO"],
+      safetySettings: SAFETY_SETTINGS,
       speechConfig: {
         voiceConfig: {
           prebuiltVoiceConfig: {
