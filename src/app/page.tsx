@@ -5,6 +5,7 @@ import StoryInput from "@/components/StoryInput";
 import StoryBook from "@/components/StoryBook";
 import LoadingState from "@/components/LoadingState";
 import { StoryPage, SSEEvent } from "@/lib/types";
+import { exportMarkdown, exportPDF } from "@/lib/export";
 
 export default function Home() {
   const [title, setTitle] = useState("");
@@ -223,7 +224,33 @@ export default function Home() {
       )}
 
       {!isGenerating && pages.length > 0 && (
-        <div className="text-center py-12 border-t border-canvas-linen">
+        <div className="text-center py-12 border-t border-canvas-linen space-y-6">
+          {/* Save options */}
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={() => exportMarkdown(title, pages.filter((p) => p.image.data))}
+              className="flex items-center gap-2 px-5 py-3 font-sans text-xs tracking-widest uppercase
+                text-ink-secondary border border-canvas-linen
+                hover:border-ink-muted hover:text-ink-primary transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M7 1v9M4 7l3 3 3-3M2 12h10" />
+              </svg>
+              Save as Markdown
+            </button>
+            <button
+              onClick={() => exportPDF(title, pages.filter((p) => p.image.data))}
+              className="flex items-center gap-2 px-5 py-3 font-sans text-xs tracking-widest uppercase
+                text-ink-secondary border border-canvas-linen
+                hover:border-ink-muted hover:text-ink-primary transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M7 1v9M4 7l3 3 3-3M2 12h10" />
+              </svg>
+              Save as PDF
+            </button>
+          </div>
+
           <button
             onClick={() => {
               setHasStarted(false);
