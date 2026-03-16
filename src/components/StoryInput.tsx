@@ -40,6 +40,70 @@ export default function StoryInput({
       <div className="max-w-2xl w-full text-center space-y-10 relative z-0">
         {/* Title */}
         <div className="space-y-4">
+          {/* Luna icon — crescent moon cradling an open book */}
+          <div className="flex justify-center mb-2">
+            <svg
+              width="72"
+              height="72"
+              viewBox="0 0 72 72"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="animate-fade-in"
+              aria-hidden="true"
+            >
+              {/* Crescent moon */}
+              <path
+                d="M52 36c0 12.15-9.85 22-22 22-3.87 0-7.51-1-10.66-2.76A22 22 0 0 0 56 36a22 22 0 0 0-36.66-16.24A21.85 21.85 0 0 1 30 18c12.15 0 22 8.06 22 18Z"
+                fill="currentColor"
+                className="text-ink-primary"
+                opacity="0.08"
+              />
+              <path
+                d="M30 14c-12.15 0-22 9.85-22 22s9.85 22 22 22c3.87 0 7.51-1 10.66-2.76A18 18 0 0 1 24 36a18 18 0 0 1 16.66-17.96A21.85 21.85 0 0 0 30 14Z"
+                stroke="currentColor"
+                className="text-ink-primary"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+              {/* Open book in the crescent's embrace */}
+              <path
+                d="M26 38c3.5-2.5 5-5 5-5s1.5 2.5 5 5"
+                stroke="currentColor"
+                className="text-ink-muted"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* Book spine */}
+              <line
+                x1="31" y1="33" x2="31" y2="41"
+                stroke="currentColor"
+                className="text-ink-muted"
+                strokeWidth="1"
+                strokeLinecap="round"
+              />
+              {/* Paintbrush flourish — a gentle arc sweeping from the book */}
+              <path
+                d="M33 35c4-1 8-3.5 12-8"
+                stroke="currentColor"
+                className="text-ink-primary"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                opacity="0.5"
+              />
+              <circle
+                cx="46" cy="26"
+                r="1.5"
+                fill="currentColor"
+                className="text-ink-primary"
+                opacity="0.35"
+              />
+              {/* Tiny stars */}
+              <circle cx="50" cy="18" r="1" fill="currentColor" className="text-ink-muted" opacity="0.4" />
+              <circle cx="56" cy="24" r="0.7" fill="currentColor" className="text-ink-muted" opacity="0.3" />
+              <circle cx="53" cy="32" r="0.8" fill="currentColor" className="text-ink-muted" opacity="0.25" />
+            </svg>
+          </div>
           <h1 className="font-serif text-7xl font-light text-ink-primary tracking-tight">
             Luna
           </h1>
