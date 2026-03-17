@@ -14,7 +14,7 @@
 
 Give Luna a theme, and she will paint your story.
 
-[Demo](#demo) · [How It Works](#how-it-works) · [Features](#features) · [Setup](#setup) · [Export](#export-your-story)
+[Live App](https://luna-storybook-897025245157.us-central1.run.app/) · [Demo](#demo) · [How It Works](#how-it-works) · [Features](#features) · [Setup](#setup) · [Export](#export-your-story)
 
 </div>
 
@@ -143,7 +143,9 @@ src/
 
 ## Demo
 
-*Coming soon — video walkthrough will be linked here.*
+[![Luna Demo](https://img.youtube.com/vi/MWiU7Bhkpss/maxresdefault.jpg)](https://www.youtube.com/watch?v=MWiU7Bhkpss)
+
+**[▶ Watch on YouTube](https://www.youtube.com/watch?v=MWiU7Bhkpss)** · **[Try it live](https://luna-storybook-897025245157.us-central1.run.app/)**
 
 ## License
 
